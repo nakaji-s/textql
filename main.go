@@ -34,6 +34,7 @@ func main() {
 	save_to := flag.String("save-to", "", "If set, sqlite3 db is left on disk at this path")
 	console := flag.Bool("console", false, "After all commands are run, open sqlite3 console with this data")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
+	out_header := flag.Bool("out-header", false, "Enable output header row")
 	flag.Parse()
 
 	if *console && (*source_text == "stdin") {
@@ -127,6 +128,15 @@ func main() {
 			if err != nil {
 				log.Fatalln(err)
 			}
+
+			if *out_header {
+				columns, err := result.Columns()
+				if err != nil {
+					log.Fatalln(err)
+				}
+				fmt.Println(strings.Join(columns, ", "))
+			}
+
 			displayResult(result)
 		}
 	}
