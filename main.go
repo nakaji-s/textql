@@ -35,6 +35,7 @@ func main() {
 	console := flag.Bool("console", false, "After all commands are run, open sqlite3 console with this data")
 	verbose := flag.Bool("verbose", false, "Enable verbose logging")
 	out_header := flag.Bool("out-header", false, "Enable output header row")
+	trim := flag.Bool("trim", false, "Trim spaces from input row")
 	flag.Parse()
 
 	if *console && (*source_text == "stdin") {
@@ -94,7 +95,7 @@ func main() {
 
 	// Load first row
 	stmt := createLoadStmt(tableName, &headerRow, tx)
-	loadRow(tableName, &first_row, tx, stmt, verbose)
+	loadRow(tableName, &first_row, tx, stmt, verbose, trim)
 
 	// Read the data
 	for {
@@ -104,7 +105,7 @@ func main() {
 		} else if file_err != nil {
 			log.Println(file_err)
 		} else {
-			loadRow(tableName, &row, tx, stmt, verbose)
+			loadRow(tableName, &row, tx, stmt, verbose, trim)
 		}
 	}
 	stmt.Close()
@@ -229,12 +230,15 @@ func createLoadStmt(tableName *string, values *[]string, db *sql.Tx) *sql.Stmt {
 	return stmt
 }
 
-func loadRow(tableName *string, values *[]string, db *sql.Tx, stmt *sql.Stmt, verbose *bool) error {
+func loadRow(tableName *string, values *[]string, db *sql.Tx, stmt *sql.Stmt, verbose *bool, trim *bool) error {
 	if len(*values) == 0 {
 		return nil
 	}
 	vals := make([]interface{}, 0)
 	for _, val := range *values {
+		if *trim {
+			val = strings.TrimSpace(val)
+		}
 		vals = append(vals, val)
 	}
 	_, err := stmt.Exec(vals...)
